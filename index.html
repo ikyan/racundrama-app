@@ -65,24 +65,36 @@
                 });
             });
 
-        function showEpisodes(index) {
+function showEpisodes(index) {
             const drama = allData[index];
             document.getElementById('modal-title').innerText = drama.judul;
             const list = document.getElementById('episode-list');
-            list.innerHTML = "";
+            list.innerHTML = `
+                <div id="video-container" style="margin-bottom: 20px;">
+                    <p style="color: #666;">Pilih episode di bawah untuk putar video</p>
+                </div>
+            `;
             
             drama.episodes.forEach(ep => {
                 list.innerHTML += `
-                    <a href="${ep.link}" class="episode-item">
+                    <div class="episode-item" onclick="putarVideo('${ep.link}')">
                         <span>${ep.nama}</span>
                         <span style="color: #E50914;">▶ PLAY</span>
-                    </a>
+                    </div>
                 `;
             });
             document.getElementById('modal').style.display = "block";
+        }
+
+        function putarVideo(linkEmbed) {
+            const container = document.getElementById('video-container');
+            container.innerHTML = `
+                <iframe src="${linkEmbed}" width="100%" height="200px" frameborder="0" scrolling="no" allowfullscreen></iframe>
+            `;
         }
 
         function closeModal() { document.getElementById('modal').style.display = "none"; }
     </script>
 </body>
 </html>
+
