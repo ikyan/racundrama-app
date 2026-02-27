@@ -2,99 +2,171 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Racun Drama VIP</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background-color: #141414; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        header { background-color: #000; padding: 15px; text-align: center; border-bottom: 2px solid #E50914; position: sticky; top: 0; z-index: 100; }
-        h1 { margin: 0; font-size: 20px; color: #E50914; text-transform: uppercase; letter-spacing: 2px; }
-        .container { padding: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
-        .card { background-color: #222; border-radius: 8px; overflow: hidden; transition: 0.3s; border: 1px solid #333; }
-        .poster { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
-        .info { padding: 8px; text-align: center; }
-        .title { font-size: 12px; font-weight: bold; margin-bottom: 8px; height: 34px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        .btn-view { background-color: #E50914; color: white; border: none; padding: 6px; border-radius: 4px; width: 100%; font-size: 11px; font-weight: bold; cursor: pointer; }
+        /* Bumbu Dasar Biar Kayak Aplikasi Pro */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Header VIP */
+        .header {
+            padding: 15px;
+            text-align: center;
+            background-color: #1a1a1a;
+            font-weight: bold;
+            font-size: 1.2em;
+            border-bottom: 2px solid #e50914;
+        }
 
-        /* Modal Overlay */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; }
-        .modal-content { padding: 20px; text-align: center; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-close { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 20px; }
-        .episode-list { display: flex; flex-direction: column; gap: 10px; }
-        .episode-item { background: #222; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; text-decoration: none; color: white; }
-        .episode-item:active { background: #E50914; }
+        /* Player Video Nempel di Atas */
+        .video-container {
+            width: 100%;
+            background-color: #000;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        video {
+            width: 100%;
+            height: auto;
+            max-height: 30vh; /* Biar gak menuhin layar banget pas portrait */
+            outline: none;
+            display: block;
+        }
+
+        /* Info Judul Drakor */
+        .info-container {
+            padding: 15px;
+        }
+        .judul-drama {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+        .status-vip {
+            font-size: 0.8em;
+            color: #aaa;
+            background: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        /* List Episode */
+        .episode-list {
+            padding: 0 15px 20px 15px;
+        }
+        .episode-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
+            color: white;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .episode-btn:active {
+            transform: scale(0.98);
+        }
+        /* Warna kalau episode lagi diputar */
+        .episode-btn.sedang-diputar {
+            background-color: #e50914;
+            border-color: #e50914;
+        }
     </style>
 </head>
 <body>
-    <header><h1>🎬 RACUN DRAMA VIP</h1></header>
-    <div class="container" id="katalog-container"></div>
 
-    <div id="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title" style="font-size: 18px; color: #E50914;">Pilih Episode</h2>
-                <button class="btn-close" onclick="closeModal()">Tutup</button>
-            </div>
-            <div id="episode-list" class="episode-list"></div>
-        </div>
+    <div class="header">👑 Racun Drama VIP</div>
+
+    <div class="video-container">
+        <video id="videoPlayer" controls playsinline>
+            <source id="videoSource" src="" type="video/mp4">
+            Browser lo gak support video bro.
+        </video>
     </div>
 
+    <div class="info-container">
+        <div class="status-vip">Pilihan VIP</div>
+        <div class="judul-drama" id="teksJudul">Memuat Drama...</div>
+    </div>
+
+    <div class="episode-list" id="daftarEpisode">
+        </div>
+
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+        // PASTIIN LINK INI BENER KE REPO GITHUB LO YA BRO
+        const linkKatalog = 'https://raw.githubusercontent.com/ikyan/racundrama-app/main/katalog.json';
 
-        let allData = [];
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoSource = document.getElementById('videoSource');
+        const teksJudul = document.getElementById('teksJudul');
+        const daftarEpisode = document.getElementById('daftarEpisode');
 
-        fetch('katalog.json?v=' + Date.now())
-            .then(res => res.json())
-            .then(data => {
-                allData = data;
-                const container = document.getElementById('katalog-container');
-                data.forEach((drama, index) => {
-                    container.innerHTML += `
-                        <div class="card" onclick="showEpisodes(${index})">
-                            <img src="${drama.poster}" class="poster">
-                            <div class="info">
-                                <div class="title">${drama.judul}</div>
-                                <button class="btn-view">LIHAT EPISODE</button>
-                            </div>
-                        </div>
-                    `;
+        async function ambilData() {
+            try {
+                // Sedot data dari katalog.json
+                const respon = await fetch(linkKatalog);
+                const data = await respon.json();
+                
+                // Ambil data drama urutan pertama
+                const drakor = data[0];
+                teksJudul.innerText = drakor.judul;
+
+                // Looping bikin tombol buat tiap episode
+                drakor.episodes.forEach((eps, index) => {
+                    const tombol = document.createElement('button');
+                    tombol.className = 'episode-btn';
+                    tombol.innerText = "▶ " + eps.nama;
+                    
+                    // Kalau tombol diklik, lakuin ini:
+                    tombol.onclick = () => {
+                        // 1. Matiin warna merah di semua tombol
+                        document.querySelectorAll('.episode-btn').forEach(btn => btn.classList.remove('sedang-diputar'));
+                        // 2. Nyalain warna merah di tombol yg diklik
+                        tombol.classList.add('sedang-diputar');
+                        
+                        // 3. Ganti link video & Play
+                        videoSource.src = eps.link;
+                        videoPlayer.load();
+                        videoPlayer.play();
+                    };
+
+                    // Masukin tombolnya ke layar
+                    daftarEpisode.appendChild(tombol);
+
+                    // Otomatis putar episode 1 pas pertama kali app dibuka
+                    if(index === 0) {
+                        tombol.click();
+                        // Pause dikit biar gak kaget lgsg bunyi pas buka app
+                        setTimeout(() => videoPlayer.pause(), 100); 
+                    }
                 });
-            });
 
-function showEpisodes(index) {
-            const drama = allData[index];
-            document.getElementById('modal-title').innerText = drama.judul;
-            const list = document.getElementById('episode-list');
-            list.innerHTML = `
-                <div id="video-container" style="margin-bottom: 20px;">
-                    <p style="color: #666;">Pilih episode di bawah untuk putar video</p>
-                </div>
-            `;
-            
-            drama.episodes.forEach(ep => {
-                list.innerHTML += `
-                    <div class="episode-item" onclick="putarVideo('${ep.link}')">
-                        <span>${ep.nama}</span>
-                        <span style="color: #E50914;">▶ PLAY</span>
-                    </div>
-                `;
-            });
-            document.getElementById('modal').style.display = "block";
+            } catch (error) {
+                teksJudul.innerText = "Gagal memuat video bro!";
+                console.error("Error ngambil katalog:", error);
+            }
         }
 
-        function putarVideo(linkEmbed) {
-            const container = document.getElementById('video-container');
-            container.innerHTML = `
-                <iframe src="${linkEmbed}" width="100%" height="200px" frameborder="0" scrolling="no" allowfullscreen></iframe>
-            `;
-        }
-
-        function closeModal() { document.getElementById('modal').style.display = "none"; }
+        // Jalankan mesinnya
+        ambilData();
     </script>
 </body>
 </html>
-
